@@ -1,0 +1,61 @@
+import java.text.DateFormat
+import java.text.SimpleDateFormat
+
+apply plugin: 'com.android.application'
+ext.appName = 'eBelief'
+buildscript {
+    repositories {
+        mavenCentral()
+        jcenter()
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:2.3.0'
+
+    }
+}
+
+android {
+    compileSdkVersion 25
+    buildToolsVersion "26.0.1"
+    defaultConfig {
+        applicationId "com.example.admin.ebeliefapp"
+        minSdkVersion 15
+        targetSdkVersion 25
+        versionCode 1
+        versionName "1.0"
+        multiDexEnabled true
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+    buildTypes {
+        applicationVariants.all { variant ->
+            if (variant.buildType.name == "release") {
+                def file = variant.outputs[0].outputFile
+                variant.outputs[0].outputFile = new File(file.parent, file.name.replace("app", getBaseApkName(defaultConfig)))
+            }
+        }
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+
+    }
+}
+
+def getBaseApkName(defaultConfig) {
+    def date = new Date();
+    def formattedDate = date.format('YYYYMMDDHHmmss')
+    return "${project.appName}-${defaultConfig.versionName}.${System.env.BUILD_NUMBER ?: 0}+${defaultConfig.versionCode}." + formattedDate
+}
+
+dependencies {
+    compile 'com.google.android.gms:play-services:11.0.4'
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
+        exclude group: 'com.android.support', module: 'support-annotations'
+    })
+    compile 'com.kyanogen.signatureview:signature-view:1.1@aar'
+    compile 'com.android.support:appcompat-v7:25.3.1'
+    compile 'com.android.support.constraint:constraint-layout:1.0.2'
+    testCompile 'junit:junit:4.12'
+}
