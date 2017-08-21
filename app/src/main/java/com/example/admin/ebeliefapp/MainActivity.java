@@ -108,6 +108,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         });
 
         capture_img.setOnClickListener(new View.OnClickListener() {
+
             @Override
             public void onClick(View v) {
                 str_date = String.valueOf(dateFormat.format(calendar.getTime()));
