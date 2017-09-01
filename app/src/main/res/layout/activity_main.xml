@@ -1,7 +1,8 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:layout_marginLeft="10dp"
+    android:layout_marginRight="10dp"
      >
 <!--
     <ScrollView
@@ -11,18 +12,40 @@
         android:layout_alignParentTop="true"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true">-->
+    <LinearLayout
+        android:id="@+id/ll_mobile_number"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/border"
+        android:layout_marginTop="5dp">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Mobile Number : "
+            android:textStyle="bold"
+            android:textColor="@android:color/black"
+            android:padding="5dp"
+
+            />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="5dp"
+            android:id="@+id/txt_mo_no"
+            android:textColor="@android:color/black"
+            />
+    </LinearLayout>
+
 <LinearLayout
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:layout_marginLeft="15dp"
-    android:layout_marginRight="15dp">
+    android:layout_below="@+id/ll_mobile_number">
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:layout_marginTop="10dp"
-
+        android:layout_marginTop="5dp"
         >
         <TextView
             android:padding="5dp"
@@ -46,48 +69,73 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-
         >
 
-        <Button
-            android:id="@+id/capture_img"
-            android:layout_width="wrap_content"
-            android:layout_height="40dp"
-            android:layout_alignParentTop="true"
-            android:layout_marginEnd="32dp"
-            android:layout_marginRight="32dp"
-            android:layout_marginTop="11dp"
-            android:paddingRight="15dp"
-            android:text="@string/cam_capture" />
+      <LinearLayout
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:id="@+id/ll_btns"
+          android:orientation="horizontal"
+          android:gravity="center"
 
-        <Button
-            android:id="@+id/btn_geo_locn"
-            android:layout_width="wrap_content"
-            android:layout_height="40dp"
-            android:layout_alignTop="@+id/btn_sign"
-            android:layout_centerHorizontal="true"
-            android:layout_marginLeft="5dp"
-            android:text="Get Location" />
+          >
+          <Button
+              android:id="@+id/btn_capture_img"
+              android:layout_width="85dp"
+              android:layout_height="60dp"
+              android:lines="2"
+              android:text="@string/cam_capture"
+              android:textAllCaps="false"
+              android:clickable="true"
+              />
 
-        <Button
-            android:id="@+id/btn_sign"
-            android:layout_width="wrap_content"
-            android:layout_height="40dp"
-            android:layout_marginLeft="10dp"
-            android:layout_marginTop="11dp"
-            android:layout_toRightOf="@+id/btn_geo_locn"
-            android:text="Sign Here" />
+          <Button
+              android:id="@+id/btn_geo_locn"
+              android:layout_width="85dp"
+              android:layout_height="60dp"
+              android:lines="2"
+              android:text="Get Location"
+              android:textAllCaps="false"
+              />
+
+          <Button
+              android:id="@+id/btn_sign"
+              android:layout_width="70dp"
+              android:layout_height="60dp"
+              android:lines="2"
+              android:text="Sign Here"
+              android:textAllCaps="false"
+              />
+
+          <Button
+              android:id="@+id/btn_scan"
+              android:layout_width="70dp"
+              android:layout_height="60dp"
+              android:lines="2"
+              android:text="QR Code"
+              android:textAllCaps="false"
+              />
+          <Button
+              android:id="@+id/btn_upload_data"
+              android:layout_width="75dp"
+              android:layout_height="60dp"
+              android:text="Upload Data"
+              android:lines="2"
+              android:textAllCaps="false"/>
+      </LinearLayout>
+
 
         <LinearLayout
             android:id="@+id/ll_img"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/capture_img"
-            android:layout_marginTop="5dp"
             android:background="@drawable/border"
             android:padding="5dp"
             android:visibility="visible"
-            android:weightSum="3">
+            android:weightSum="3"
+            android:layout_below="@+id/ll_btns"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true">
 
             <ImageView
                 android:id="@+id/img_viw_one"
