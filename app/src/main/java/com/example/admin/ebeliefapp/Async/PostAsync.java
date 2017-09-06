@@ -206,6 +206,8 @@ public class PostAsync extends AsyncTask<String, Void, String> {
     @Override
     protected void onPostExecute(String result) {
         super.onPostExecute(result);
+
+
         try {
             JSONObject jsonObject = new JSONObject(result);
             if (jsonObject.has("status")) {
