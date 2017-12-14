@@ -3,32 +3,33 @@ import java.text.SimpleDateFormat
 
 apply plugin: 'com.android.application'
 ext.appName = 'eBelief'
-buildscript {
+/*buildscript {
     repositories {
         mavenCentral()
         jcenter()
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.3.0'
+        classpath 'com.android.tools.build:gradle:3.0.1'
 
     }
-}
+}*/
 
 android {
-    compileSdkVersion 25
-    buildToolsVersion "26.0.1"
+    compileSdkVersion 26
+    buildToolsVersion "26.0.2"
     useLibrary 'org.apache.http.legacy'
     defaultConfig {
         applicationId "com.example.admin.ebeliefapp"
         minSdkVersion 15
-        targetSdkVersion 25
+        targetSdkVersion 26
         versionCode 1
         versionName "1.0"
         multiDexEnabled true
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
-    buildTypes {
+
+    /*buildTypes {
         applicationVariants.all { variant ->
             if (variant.buildType.name == "release") {
                 def file = variant.outputs[0].outputFile
@@ -40,7 +41,8 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
 
-    }
+    }*/
+
 }
 
 def getBaseApkName(defaultConfig) {
@@ -59,10 +61,10 @@ dependencies {
     compile 'com.journeyapps:zxing-android-embedded:3.2.0@aar'
     compile 'com.google.zxing:core:3.2.1'
     compile 'com.kyanogen.signatureview:signature-view:1.1@aar'
-    compile 'com.android.support:appcompat-v7:25.3.1'
+    compile 'com.android.support:appcompat-v7:26.1.0'
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
-    compile 'com.android.support:design:25.3.1'
-    compile 'com.android.support:support-v4:25.3.1'
-    compile 'com.android.support:cardview-v7:25.3.1'
+    compile 'com.android.support:design:26.1.0'
+    compile 'com.android.support:support-v4:26.1.0'
+    compile 'com.android.support:cardview-v7:26.1.0'
     testCompile 'junit:junit:4.12'
 }

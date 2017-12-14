@@ -14,11 +14,13 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Base64;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
 
 import com.example.admin.ebeliefapp.Constants.Tags;
+import com.example.admin.ebeliefapp.R;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -36,7 +38,8 @@ import java.util.regex.Pattern;
  */
 public class AppDelegate extends Application {
     public static AppDelegate mInstance;
-    public ProgressDialog mProgressDialog;
+    public static ProgressDialog mProgressDialog;
+
     public static boolean CheckEmail(@NonNull String email) {
         String EMAIL_PATTERN = "^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@"
                 + "[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$";
@@ -215,7 +218,6 @@ public class AppDelegate extends Application {
     }
 
 
-
     public static void Log(String TAG, String Message) {
         AppDelegate.Log(TAG, Message, 1);
     }
@@ -371,28 +373,28 @@ public class AppDelegate extends Application {
     }
 
 
-    public void showProgressDialog(Activity mContext) {
+    public static void showProgressDialog(Activity mContext) {
         showProgressDialog(mContext, "", "");
     }
 
-    public void showProgressDialog(Activity mContext, String mTitle,
-                                   String mMessage) {
+    public static void showProgressDialog(Activity mContext, String mTitle,
+                                          String mMessage) {
         AppDelegate.hideKeyBoard(mContext);
         try {
             if (mContext != null) {
                 if (mProgressDialog != null && mProgressDialog.isShowing()) {
                     return;
                 }
-                mProgressDialog = new ProgressDialog(mContext);
+                mProgressDialog = new ProgressDialog(mContext, R.style.MyTheme);
                 mProgressDialog.setCancelable(false);
-                mProgressDialog.setTitle(mTitle);
-                mProgressDialog.setMessage(mMessage);
+                mProgressDialog.getWindow().setGravity(Gravity.CENTER);
                 if (mProgressDialog != null && mProgressDialog.isShowing()) {
                     mProgressDialog.dismiss();
                     mProgressDialog.show();
                 } else {
                     mProgressDialog.show();
                 }
+
             }
         } catch (Exception e) {
             AppDelegate.LogE(e);
@@ -400,7 +402,7 @@ public class AppDelegate extends Application {
 
     }
 
-    public void hideProgressDialog(Context mContext) {
+    public static void hideProgressDialog(Context mContext) {
         try {
             if (mContext != null) {
                 if (mProgressDialog != null && mProgressDialog.isShowing()) {

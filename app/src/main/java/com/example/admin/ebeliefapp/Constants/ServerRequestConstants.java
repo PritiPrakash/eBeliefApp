@@ -4,4 +4,6 @@ public class ServerRequestConstants {
 
     public static final String BaseUrl = "http://10.153.6.141/eCourtBailiffApp/photoUploadWebService.php";
     public static final String Key_PostFileValue = "File";
+
+    public static final String googlDriveURL = "http://docs.google.com/gview?embedded=true&url=";
 }

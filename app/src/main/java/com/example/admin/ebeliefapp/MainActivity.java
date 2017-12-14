@@ -16,9 +16,12 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.telephony.TelephonyManager;
 import android.util.Base64;
 import android.view.View;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -29,7 +32,13 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.admin.ebeliefapp.Adapters.RecyclerViewNoticeAdapter;
 import com.example.admin.ebeliefapp.Constants.ServerRequestConstants;
+import com.example.admin.ebeliefapp.Constants.Tags;
+import com.example.admin.ebeliefapp.EncryptionAlgorithm.MCryptClass;
+import com.example.admin.ebeliefapp.Interfaces.RecyclerItemClickListener;
+import com.example.admin.ebeliefapp.Models.NoticeList;
+import com.example.admin.ebeliefapp.utility.AppDelegate;
 import com.example.admin.ebeliefapp.view.CustomeDialog;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
@@ -59,13 +68,17 @@ import java.util.ArrayList;
 import java.util.Calendar;
 
 
+import static com.example.admin.ebeliefapp.Constants.ServerRequestConstants.googlDriveURL;
 import static com.example.admin.ebeliefapp.PermissionUtils.CAMERA_PERMISSION_ID;
 
 public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener, LocationListener {
     Button btn_capture_img, btn_geo_locn, btn_sign, btn_scan, btn_upload_data;
     ImageView img_viw_one, img_viw_two, img_viw_three, img_viewer;
-    ListView list_notice;
+    RecyclerView recycler_view_notice;
+    private RecyclerView.Adapter mAdapterNoticeList;
+    private LinearLayoutManager mLayoutManagerNoticeList;
+    private ArrayList<NoticeList> arrayNoticeList;
     WebView webview_notice;
     TextView txt_mo_no;
     private Uri mUri;
@@ -76,17 +89,17 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     final Calendar calendar = Calendar.getInstance();
     String str_date, strLat = "bla", strLon = "bla";
     String imgname;
-    NoticeListAdapter noticeListAdapter;
     ArrayList<String> noticeArray = new ArrayList<String>();
     int count = 0;
     GoogleApiClient mGoogleApiClient;
     private static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
+    private static final int REQUEST_WRITE_PERMISSION = 20;
     Location mLocation;
     private LocationRequest mLocationRequest;
     private long UPDATE_INTERVAL = 15000;  /* 15 secs */
     private long FASTEST_INTERVAL = 5000; /* 5 secs */
-
-
+    MCryptClass mCryptClass = new MCryptClass();
+    String encryptedImgOne, encryptedImgTwo;
     String sResponse;
     StringBuilder s = new StringBuilder();
 
@@ -105,12 +118,23 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         img_viw_two = (ImageView) findViewById(R.id.img_viw_two);
         img_viw_three = (ImageView) findViewById(R.id.img_viw_three);
         img_viewer = (ImageView) findViewById(R.id.img_viewer);
-        list_notice = (ListView) findViewById(R.id.list_notice);
         webview_notice = (WebView) findViewById(R.id.webview_notice);
+
+
+        recycler_view_notice = (RecyclerView) findViewById(R.id.recycler_view_notice);
+        recycler_view_notice.setHasFixedSize(true);
+        arrayNoticeList = new ArrayList<NoticeList>();
+        arrayNoticeList.clear();
+        addItemInArray();
+        mLayoutManagerNoticeList = new LinearLayoutManager(getApplicationContext());
+        recycler_view_notice.setLayoutManager(mLayoutManagerNoticeList);
+        mAdapterNoticeList = new RecyclerViewNoticeAdapter(getApplicationContext(), arrayNoticeList);
+        recycler_view_notice.setAdapter(mAdapterNoticeList);
+
 
         appPermissionChecking();
         //additems in noticeArray...
-        addItemInArray();
+
 
         btn_capture_img.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -144,35 +168,64 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         btn_upload_data.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-               /* SendHttpRequestTask t = new SendHttpRequestTask();
+                SendHttpRequestTask t = new SendHttpRequestTask();
 
                 String[] params = new String[]{ServerRequestConstants.BaseUrl, strLat, strLon};
-                t.execute(params);*/
-                CustomeDialog customDialog = new CustomeDialog(MainActivity.this, "Hiiiii");
+                t.execute(params);
+                /*CustomeDialog customDialog = new CustomeDialog(MainActivity.this, "Hiiiii");
                 customDialog.setCanceledOnTouchOutside(false);
-                customDialog.show();
+                customDialog.show();*/
             }
         });
 
-        noticeListAdapter = new NoticeListAdapter(getApplicationContext(), noticeArray);
-        list_notice.setAdapter(noticeListAdapter);
+        btn_scan.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CAMERA}, REQUEST_WRITE_PERMISSION);
+            }
+        });
 
-        list_notice.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+        recycler_view_notice.addOnItemTouchListener(new RecyclerItemClickListener(getApplicationContext(), recycler_view_notice, new RecyclerItemClickListener.OnItemClickListener() {
+            @Override
+            public void onItemClick(View view, int position) {
+                webview_notice.getSettings().setJavaScriptEnabled(true);
+                // webview_notice.getSettings().setPluginState(WebSettings.PluginState.ON);
+                webview_notice.setWebViewClient(new Callback());
+                //String pdfURL = null;
+                //   webview_notice.loadUrl(arrayNoticeList.get(position).getUrl());
+
+
+                webview_notice.setWebViewClient(new WebViewClient() {
+                    public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
+                        Toast.makeText(getApplicationContext(), description, Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onPageStarted(WebView view, String url, Bitmap favicon) {
+                        AppDelegate.showProgressDialog(MainActivity.this);
+                    }
+
+
+                    @Override
+                    public void onPageFinished(WebView view, String url) {
+                        AppDelegate.hideProgressDialog(MainActivity.this);
+
+                        //String webUrl = mWebview.getUrl();
+
+                    }
+                });
+
+                webview_notice.loadUrl(arrayNoticeList.get(position).getUrl());
+
+
+            }
 
             @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                webview_notice.getSettings().setJavaScriptEnabled(true);
-                webview_notice.getSettings().setPluginState(WebSettings.PluginState.ON);
-                webview_notice.setWebViewClient(new Callback());
-                String pdfURL = null;
-                if (position == 0)
-                    pdfURL = "http://dl.dropboxusercontent.com/u/37098169/Course%20Brochures/AND101.pdf";
-                else if (position == 1)
-                    pdfURL = "https://drive.google.com/drive/folders/0B_8Ttd6cOnC0TDVzZzB5VGhBRkk";
-                webview_notice.loadUrl("http://docs.google.com/gview?embedded=true&url=" + pdfURL);
-
+            public void onLongItemClick(View view, int position) {
+                // do whatever
             }
-        });
+        }));
 
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .addApi(LocationServices.API)
@@ -183,13 +236,33 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
     private void getUserSimNumber() {
         TelephonyManager tMgr = (TelephonyManager) getApplicationContext().getSystemService(Context.TELEPHONY_SERVICE);
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_SMS) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
         String mPhoneNumber = tMgr.getLine1Number();
         txt_mo_no.setText(mPhoneNumber);
     }
 
     private void addItemInArray() {
+        String pdfURL = null;
         for (int i = 0; i <= 5; i++) {
-            noticeArray.add(i, "Here is your link " + (i + 1));
+
+            if (i == 0)
+                pdfURL = "https://www.antennahouse.com/XSLsample/pdf/sample-link_1.pdf";
+            else
+                pdfURL = "https://drive.google.com/drive/folders/0B_8Ttd6cOnC0TDVzZzB5VGhBRkk";
+
+            NoticeList noticeList = new NoticeList();
+            noticeList.setID(i);
+            noticeList.setUrl(ServerRequestConstants.googlDriveURL + pdfURL);
+            arrayNoticeList.add(noticeList);
         }
     }
 
@@ -203,6 +276,28 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         };
         PermissionUtils.requestPermissions(this, CAMERA_PERMISSION_ID, permissions);
     }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        switch (requestCode) {
+            case REQUEST_WRITE_PERMISSION:
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    IntentIntegrator scanIntegrator = new IntentIntegrator(this);
+                    scanIntegrator.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE_TYPES);
+                    scanIntegrator.setPrompt("eBelief");
+                    scanIntegrator.setCameraId(0);
+                    scanIntegrator.setBeepEnabled(true);
+                    scanIntegrator.setBarcodeImageEnabled(false);
+                    scanIntegrator.setOrientationLocked(false);
+                    scanIntegrator.initiateScan();
+                } else {
+                    Toast.makeText(MainActivity.this, "Permission Denied!", Toast.LENGTH_SHORT).show();
+                }
+        }
+    }
+
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -221,6 +316,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                         btn_capture_img.setClickable(true);
                     }
                 }
+                break;
             default:
                 if (requestCode == SCAN) {
                     IntentResult scanningResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
@@ -284,8 +380,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
     private class Callback extends WebViewClient {
         @Override
-        public boolean shouldOverrideUrlLoading(
-                WebView view, String url) {
+        public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
             return (false);
         }
     }
@@ -377,7 +472,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
     @Override
     public void onLocationChanged(Location location) {
-
         if (location != null) {
             Toast.makeText(getApplicationContext(), "LATttt : " + location.getLatitude() + " , LONnnn : " + location.getLongitude(), Toast.LENGTH_SHORT).show();
             strLat = String.valueOf(location.getLatitude());
@@ -399,7 +493,11 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
 
     private class SendHttpRequestTask extends AsyncTask<String, Void, String> {
-
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            AppDelegate.showProgressDialog(MainActivity.this);
+        }
 
         @Override
         protected String doInBackground(String... params) {
@@ -407,31 +505,27 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             String lattitude = params[1];
             String longitude = params[2];
 
-
             try {
 //                Bitmap photo = BitmapFactory.decodeResource(MainActivity.this.getResources(), R.drawable.logo);
-                Bitmap photo = bitmap1;
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                photo.compress(Bitmap.CompressFormat.JPEG, 100, baos);
-                byte[] imageBytes = baos.toByteArray();
-                String encodedImage1 = Base64.encodeToString(imageBytes, Base64.DEFAULT);
 
                 HttpClient client = new DefaultHttpClient();
 
                 HttpPost post = new HttpPost(url);
                 MultipartEntity multiPart = new MultipartEntity();
-                multiPart.addPart("param1", new StringBody(lattitude));
-                multiPart.addPart("param2", new StringBody(longitude));
+                multiPart.addPart("param1", new StringBody("img_belief"));
+                //  multiPart.addPart("param2", new StringBody(longitude));
 //                multiPart.addPart("file", new ByteArrayBody(baos.toByteArray(), "logo.png"));
-                multiPart.addPart("image", new StringBody(encodedImage1));
+
+                encryptedImgOne = mCryptClass.bytesToHex(mCryptClass.encrypt(encodeImage(bitmap1)));
+                encryptedImgTwo = mCryptClass.bytesToHex(mCryptClass.encrypt(encodeImage(bitmap2)));
+                multiPart.addPart("image", new StringBody(encryptedImgOne));
+                multiPart.addPart("image", new StringBody(encryptedImgTwo));
                 post.setEntity(multiPart);
 
                 HttpResponse response = client.execute(post);
 
-
                 BufferedReader reader = new BufferedReader(new InputStreamReader(
                         response.getEntity().getContent(), "UTF-8"));
-
 
                 while ((sResponse = reader.readLine()) != null) {
                     s = s.append(sResponse);
@@ -449,11 +543,20 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         @Override
         protected void onPostExecute(String data) {
 //            item.setActionView(null);
+            AppDelegate.hideProgressDialog(MainActivity.this);
             Toast.makeText(MainActivity.this, "Respo ::: " + s, Toast.LENGTH_SHORT).show();
         }
 
 
     }
 
+
+    public String encodeImage(Bitmap bitmap) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 50, baos);
+        byte[] imageBytes = baos.toByteArray();
+        String encodedString = Base64.encodeToString(imageBytes, Base64.DEFAULT);
+        return encodedString;
+    }
 
 }
